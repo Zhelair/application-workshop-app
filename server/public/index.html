@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Workshop Control Room</title>
+    <style>
+      :root { --bg:#0b1020; --panel:#121a2e; --panel-2:#18233b; --line:#2b3a59; --text:#edf3ff; --muted:#9eacc5; --accent:#7c8cff; --good:#45d19a; --warn:#ffcc66; --danger:#ff7b91; }
+      * { box-sizing:border-box; }
+      body { margin:0; min-height:100vh; color:var(--text); background:radial-gradient(circle at 10% 0%, #1b2b4b 0, transparent 35%), var(--bg); font:14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+      button, textarea, select { font:inherit; }
+      button { cursor:pointer; }
+      .shell { max-width:1440px; margin:0 auto; padding:26px; }
+      .topbar { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:22px; }
+      .eyebrow { color:#9eafff; font-size:11px; letter-spacing:.18em; text-transform:uppercase; font-weight:800; }
+      h1, h2, h3, p { margin:0; }
+      h1 { margin-top:4px; font-size:28px; letter-spacing:-.04em; }
+      .sub { color:var(--muted); margin-top:5px; }
+      .status { display:flex; align-items:center; gap:9px; border:1px solid var(--line); background:#111a2eaa; padding:9px 12px; border-radius:999px; color:var(--muted); }
+      .dot { width:9px; height:9px; border-radius:50%; background:var(--warn); box-shadow:0 0 14px currentColor; }
+      .dot.good { background:var(--good); color:var(--good); }
+      .grid { display:grid; grid-template-columns: minmax(300px, .9fr) minmax(420px, 1.5fr) minmax(250px, .7fr); gap:16px; }
+      .panel { background:linear-gradient(180deg, #15203aee, #10182bed); border:1px solid var(--line); border-radius:18px; overflow:hidden; box-shadow:0 18px 60px #0003; }
+      .panel-head { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--line); }
+      .panel-head h2 { font-size:14px; }
+      .panel-body { padding:18px; }
+      label { display:block; color:var(--muted); font-size:12px; font-weight:700; margin-bottom:7px; }
+      select, textarea { width:100%; color:var(--text); background:#0b1223; border:1px solid var(--line); border-radius:11px; padding:11px 12px; outline:none; }
+      select:focus, textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px #7c8cff22; }
+      textarea { min-height:330px; resize:vertical; }
+      .field { margin-bottom:16px; }
+      .actions { display:flex; gap:9px; flex-wrap:wrap; }
+      .primary, .ghost { border:1px solid transparent; border-radius:10px; padding:10px 14px; font-weight:800; }
+      .primary { color:white; background:linear-gradient(135deg, #7180ff, #9b75ff); box-shadow:0 8px 24px #7c8cff3a; }
+      .ghost { color:var(--text); background:#ffffff08; border-color:var(--line); }
+      .primary:disabled { opacity:.55; cursor:wait; }
+      .helper { color:var(--muted); font-size:12px; margin-top:11px; }
+      .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:16px; }
+      .metric { background:#0b1223aa; border:1px solid var(--line); border-radius:12px; padding:12px; }
+      .metric strong { display:block; font-size:20px; margin-top:3px; }
+      .metric span { color:var(--muted); font-size:11px; }
+      .tabs { display:flex; gap:7px; border-bottom:1px solid var(--line); padding:0 18px; }
+      .tab { border:0; color:var(--muted); background:transparent; padding:11px 3px; margin-right:13px; border-bottom:2px solid transparent; }
+      .tab.active { color:var(--text); border-bottom-color:var(--accent); }
+      .output { min-height:390px; max-height:560px; overflow:auto; padding:18px; white-space:pre-wrap; color:#dbe6ff; }
+      .empty { color:var(--muted); display:grid; place-items:center; min-height:350px; text-align:center; }
+      .empty strong { display:block; color:var(--text); font-size:16px; margin-bottom:5px; }
+      .event { border-bottom:1px solid var(--line); padding:11px 0; }
+      .event:first-child { padding-top:0; }
+      .event small { color:var(--muted); display:block; }
+      .badge { display:inline-flex; border-radius:999px; padding:4px 8px; font-size:11px; background:#45d19a18; color:var(--good); }
+      .badge.warn { background:#ffcc6618; color:var(--warn); }
+      .notice { color:var(--muted); border:1px dashed var(--line); padding:12px; border-radius:12px; margin-top:14px; }
+      .workflow-form { margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
+      .workflow-form h3 { font-size:13px; margin-bottom:5px; }
+      .workflow-form p { color:var(--muted); font-size:12px; margin-bottom:12px; }
+      .workflow-form input { width:100%; color:var(--text); background:#0b1223; border:1px solid var(--line); border-radius:11px; padding:11px 12px; outline:none; margin-bottom:10px; }
+      .workflow-form input:focus { border-color:var(--accent); box-shadow:0 0 0 3px #7c8cff22; }
+      .timeline { display:grid; gap:12px; }
+      .stage { border:1px solid var(--line); border-radius:12px; background:#0b122388; overflow:hidden; }
+      .stage-head { display:flex; justify-content:space-between; gap:12px; padding:11px 13px; background:#ffffff08; }
+      .stage-head strong { display:block; }
+      .stage-head small { color:var(--muted); }
+      .stage-body { padding:13px; white-space:pre-wrap; color:#dbe6ff; }
+      @media (max-width: 1050px) { .grid { grid-template-columns:1fr 1.3fr; } .right { grid-column:1 / -1; } }
+      @media (max-width: 720px) { .shell { padding:16px; } .topbar { align-items:flex-start; flex-direction:column; } .grid { grid-template-columns:1fr; } .right { grid-column:auto; } textarea { min-height:220px; } }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div><div class="eyebrow">Application Workshop · local layer</div><h1>DeepSeek Control Room</h1><p class="sub">A safe first window for prompts, responses, usage, and review.</p></div>
+        <div class="status"><span id="dot" class="dot"></span><span id="statusText">Checking local proxy…</span></div>
+      </header>
+      <section class="grid">
+        <article class="panel">
+          <div class="panel-head"><h2>Task input</h2><span class="badge">server-side key</span></div>
+          <div class="panel-body">
+            <div class="field"><label for="model">Model</label><select id="model"><option value="deepseek-v4-flash">deepseek-v4-flash · fast/default</option><option value="deepseek-v4-pro">deepseek-v4-pro · deep review</option></select></div>
+            <div class="field"><label for="prompt">Prompt</label><textarea id="prompt">Read the Application Workshop vision and propose three concrete acceptance tests for the Excel-to-App MVP. Label each statement as SOURCE, INFERENCE, SUGGESTION, or UNKNOWN where appropriate.</textarea></div>
+            <div class="actions"><button id="send" class="primary">Run DeepSeek</button><button id="clear" class="ghost">Clear</button></div>
+            <p class="helper">The browser talks to this local proxy. Your API key never belongs in this page.</p>
+            <div class="notice"><strong>Live Product Brain context</strong><div id="contextFiles">Loading approved files…</div></div>
+            <div class="workflow-form">
+              <h3>Skill Planning Workflow</h3>
+              <p>Run a coordinated architecture → security review → synthesis pass.</p>
+              <input id="skillName" value="Excel Inspection Skill" aria-label="Skill name" />
+              <input id="skillPurpose" value="Inspect an approved Excel or CSV file and produce a safe, structured report without changing external systems." aria-label="Skill purpose" />
+              <button id="runWorkflow" class="ghost">Plan this Skill together</button>
+            </div>
+            <div class="workflow-form">
+              <h3>Research Mode</h3>
+              <p>Investigate a hard question, challenge the findings, and create a handoff plan.</p>
+              <input id="researchQuestion" value="What must we define before creating the official Skill registry and safe installation workflow?" aria-label="Research question" />
+              <button id="runResearch" class="ghost">Research this with DeepSeek</button>
+            </div>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="panel-head"><h2>Response preview</h2><span id="badge" class="badge warn">Waiting</span></div>
+          <div class="tabs"><button class="tab active" data-tab="answer">Answer</button><button class="tab" data-tab="workflow">Skill workflow</button><button class="tab" data-tab="research">Research</button><button class="tab" data-tab="json">Raw JSON</button><button class="tab" data-tab="code">Code / next step</button></div>
+          <div id="output" class="output"><div class="empty"><div><strong>Ready for a controlled test</strong>Run a prompt to see the response and usage returned by the provider.</div></div></div>
+        </article>
+        <aside class="panel right">
+          <div class="panel-head"><h2>Run telemetry</h2><span class="badge">v0.1</span></div>
+          <div class="panel-body">
+            <div class="metrics"><div class="metric"><span>Prompt tokens</span><strong id="promptTokens">—</strong></div><div class="metric"><span>Answer tokens</span><strong id="answerTokens">—</strong></div><div class="metric"><span>Total</span><strong id="totalTokens">—</strong></div></div>
+            <div class="event"><small>Model</small><span id="modelValue">—</span></div>
+            <div class="event"><small>Last request</small><span id="requestValue">—</span></div>
+            <div class="event"><small>Provider status</small><span id="providerValue">Not tested</span></div>
+            <div class="notice">Next layer: project files, Blueprint context, token-cost tracking, and review history.</div>
+          </div>
+        </aside>
+      </section>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      let last = null; let lastWorkflow = null; let lastResearch = null; let activeTab = "answer";
+      function show(value) { $("output").textContent = value || "No response content returned."; }
+      function setStatus(ok, text) { $("dot").className = `dot ${ok ? "good" : ""}`; $("statusText").textContent = text; }
+      function render() {
+        if (activeTab === "workflow" && lastWorkflow) { renderWorkflow(lastWorkflow); return; }
+        if (activeTab === "research" && lastResearch) { renderWorkflow(lastResearch); return; }
+        if (!last) return;
+        if (activeTab === "answer") show(last.answer);
+        if (activeTab === "json") show(JSON.stringify(last.raw, null, 2));
+        if (activeTab === "code") show("Next implementation step:\n\n1. Save this response as project evidence.\n2. Ask the Blueprint Architect to convert it into structured JSON.\n3. Review before applying any code or schema changes.");
+      }
+      function renderWorkflow(data) {
+        const root = document.createElement("div"); root.className = "timeline";
+        const summary = document.createElement("div"); summary.className = "notice"; summary.textContent = `Completed ${data.stages.length} coordinated stages · ${data.totalUsage?.total_tokens || 0} total tokens · ${data.model}`; root.appendChild(summary);
+        for (const stage of data.stages) { const card = document.createElement("section"); card.className = "stage"; const head = document.createElement("div"); head.className = "stage-head"; const title = document.createElement("div"); const strong = document.createElement("strong"); strong.textContent = stage.title; const small = document.createElement("small"); small.textContent = `${stage.role} · ${((stage.elapsedMs || 0)/1000).toFixed(1)}s`; title.append(strong, small); const usage = document.createElement("small"); usage.textContent = `${stage.usage?.total_tokens || 0} tokens`; head.append(title, usage); const body = document.createElement("div"); body.className = "stage-body"; body.textContent = stage.output; card.append(head, body); root.appendChild(card); }
+        const next = document.createElement("div"); next.className = "notice"; next.innerHTML = "<strong>Next steps</strong>"; const list = document.createElement("ol"); for (const item of data.nextSteps || []) { const li = document.createElement("li"); li.textContent = item; list.appendChild(li); } next.appendChild(list); root.appendChild(next); $("output").replaceChildren(root);
+      }
+      async function health() { try { const r = await fetch("/api/health"); const data = await r.json(); setStatus(data.ok && data.configured, data.configured ? `Connected · ${data.model}` : "Key not configured"); $("model").value = data.model; $("contextFiles").textContent = data.contextFiles?.length ? `${data.contextFiles.length} files loaded on every request: ${data.contextFiles.join(", ")}` : "No Product Brain files found."; } catch { setStatus(false, "Proxy unavailable"); $("contextFiles").textContent = "Proxy unavailable."; } }
+      $("send").addEventListener("click", async () => {
+        const prompt = $("prompt").value.trim(); if (!prompt) return;
+        $("send").disabled = true; $("badge").textContent = "Running"; $("badge").className = "badge warn"; $("providerValue").textContent = "Request in progress…"; show("Waiting for DeepSeek…");
+        const started = Date.now();
+        try {
+          const response = await fetch("/api/ai", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({ prompt, model:$("model").value }) });
+          const raw = await response.json(); if (!response.ok) throw new Error(raw.error || "Request failed");
+          const choice = raw.choices?.[0]; last = { raw, answer:choice?.message?.content || "", usage:raw.usage || {} };
+          render(); const usage = last.usage; $("promptTokens").textContent = usage.prompt_tokens ?? "—"; $("answerTokens").textContent = usage.completion_tokens ?? "—"; $("totalTokens").textContent = usage.total_tokens ?? "—"; $("modelValue").textContent = raw.model || $("model").value; $("requestValue").textContent = `${((Date.now()-started)/1000).toFixed(1)}s ago`; $("providerValue").textContent = "Success"; $("badge").textContent = "Complete"; $("badge").className = "badge";
+        } catch (error) { show(`Request failed\n\n${error.message}\n\nCheck that the proxy is running and .env.local contains a valid key.`); $("providerValue").textContent = "Failed"; $("badge").textContent = "Error"; }
+        finally { $("send").disabled = false; }
+      });
+      $("clear").addEventListener("click", () => { $("prompt").value = ""; last = null; lastWorkflow = null; lastResearch = null; activeTab = "answer"; document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x.dataset.tab === "answer")); show("Ready for a controlled test"); });
+      $("runWorkflow").addEventListener("click", async () => {
+        const name = $("skillName").value.trim(); const purpose = $("skillPurpose").value.trim(); if (!name || !purpose) return;
+        $("runWorkflow").disabled = true; $("badge").textContent = "Planning"; $("badge").className = "badge warn"; activeTab = "workflow"; document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x.dataset.tab === "workflow"));
+        show("Stage 1/3 · Primary architecture plan…\n\nStage 2/3 · Security review…\n\nStage 3/3 · Workshop synthesis…");
+        try { const response = await fetch("/api/workflow/skill", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({ name, purpose, model:$("model").value }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Workflow failed"); lastWorkflow = data; renderWorkflow(data); $("badge").textContent = "Workflow complete"; $("badge").className = "badge"; $("promptTokens").textContent = data.totalUsage.prompt_tokens; $("answerTokens").textContent = data.totalUsage.completion_tokens; $("totalTokens").textContent = data.totalUsage.total_tokens; $("modelValue").textContent = data.model; $("providerValue").textContent = "3-stage success"; $("requestValue").textContent = "just now"; } catch (error) { show(`Workflow failed\n\n${error.message}`); $("badge").textContent = "Error"; } finally { $("runWorkflow").disabled = false; }
+      });
+      $("runResearch").addEventListener("click", async () => {
+        const question = $("researchQuestion").value.trim(); if (!question) return;
+        $("runResearch").disabled = true; $("badge").textContent = "Researching"; $("badge").className = "badge warn"; activeTab = "research"; document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x.dataset.tab === "research"));
+        show("Stage 1/4 · Define the research task…\n\nStage 2/4 · DeepSeek evidence pass…\n\nStage 3/4 · Challenge findings…\n\nStage 4/4 · Synthesize execution plan…");
+        try { const response = await fetch("/api/workflow/research", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({ question, model:$("model").value }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Research workflow failed"); lastResearch = data; renderWorkflow(data); $("badge").textContent = "Research complete"; $("badge").className = "badge"; $("promptTokens").textContent = data.totalUsage.prompt_tokens; $("answerTokens").textContent = data.totalUsage.completion_tokens; $("totalTokens").textContent = data.totalUsage.total_tokens; $("modelValue").textContent = data.model; $("providerValue").textContent = "Research complete"; $("requestValue").textContent = "just now"; } catch (error) { show(`Research failed\n\n${error.message}`); $("badge").textContent = "Error"; } finally { $("runResearch").disabled = false; }
+      });
+      document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => { document.querySelectorAll(".tab").forEach((x) => x.classList.remove("active")); tab.classList.add("active"); activeTab = tab.dataset.tab; render(); }));
+      health();
+    </script>
+  </body>
+</html>

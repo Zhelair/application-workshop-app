@@ -1,16 +1,7 @@
-import http from "node:http";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-const envText = await readFile(new URL(".env.local", import.meta.url), "utf8").catch(() => "");
-for (const line of envText.split(/\r?\n/)) {
-  const match = line.match(/^([A-Z0-9_]+)=(.*)$/);
-  if (match && !process.env[match[1]]) process.env[match[1]] = match[2];
-}
-
-const port = Number(process.env.PORT || 3000);
 const apiKey = process.env.DEEPSEEK_API_KEY;
 const baseUrl = process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
 const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
@@ -19,10 +10,7 @@ const githubToken = process.env.BRAIN_GITHUB_TOKEN || "";
 const githubOwner = process.env.BRAIN_GITHUB_OWNER || "Zhelair";
 const githubRepo = process.env.BRAIN_GITHUB_REPO || "application-workshop-brain";
 const githubRef = process.env.BRAIN_GITHUB_REF || "main";
-const html = await readFile(new URL("./public/index.html", import.meta.url), "utf8");
-const projectRoot = process.env.WORKSHOP_BRAIN_PATH
-  ? path.resolve(process.env.WORKSHOP_BRAIN_PATH)
-  : fileURLToPath(new URL("../../application-workshop-brain", import.meta.url));
+const projectRoot = path.resolve(process.cwd());
 const contextPaths = [
   "AI_RULES.md",
   "specification/000_VISION.md",
@@ -105,10 +93,6 @@ function isAuthorized(req) {
 }
 
 export async function handleRequest(req, res) {
-  if (req.method === "GET" && req.url === "/") {
-    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-    return res.end(html);
-  }
   if (req.method === "GET" && req.url === "/api/auth/status") {
     return json(res, 200, { required: Boolean(accessPassword), authorized: isAuthorized(req) });
   }
@@ -272,11 +256,4 @@ export async function handleRequest(req, res) {
   } catch (error) {
     return json(res, 502, { error: error.message });
   }
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const server = http.createServer(handleRequest);
-  server.listen(port, "127.0.0.1", () => {
-    console.log(`DeepSeek local proxy listening on http://127.0.0.1:${port}`);
-  });
 }

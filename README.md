@@ -4,7 +4,7 @@ Private web application for the Application Workshop.
 
 ## Current layer
 
-The repository currently contains the local DeepSeek Control Room:
+The repository currently contains the Vercel DeepSeek Control Room:
 
 - prompt and model selection
 - Product Brain context display
@@ -13,23 +13,15 @@ The repository currently contains the local DeepSeek Control Room:
 - Skill Planning Workflow
 - Research Mode
 
-## Local setup
+## Runtime
 
-From this repository root:
+Vercel is the primary runtime. The repository does not require a local server or local API-key file.
+
+Run only the syntax check before pushing:
 
 ```bat
-copy server\.env.example server\.env.local
-notepad server\.env.local
-npm install
 npm run check
-npm run start
 ```
-
-Open `http://localhost:3000`.
-
-Set `WORKSHOP_BRAIN_PATH` to the local sibling Brain repository. The server reads only the allowlisted Product Brain files and never sends the whole repository to the browser.
-
-Local setup is optional. The primary target is Vercel.
 
 ## Vercel setup
 
@@ -55,4 +47,4 @@ Enable Vercel Deployment Protection for previews. The application gate remains e
 - `application-workshop-brain` owns specifications, skills, templates, agents, and research.
 - `application-workshop-app` owns the UI, server, provider router, tools, tests, and deployment configuration.
 
-The app may read approved Brain context during development. It must not modify the Brain repository automatically.
+The app reads approved Brain context server-side through the private GitHub token. It must not modify the Brain repository automatically.
